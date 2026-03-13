@@ -1,8 +1,14 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
+import os
 from dotenv import load_dotenv
 
+
 from mpesa_parser import extract_mpesa_data  # <-- Importing your new parser!
+
+#NEW : import charity's database model so we can save the parsed data right away
+from models import db, Transaction 
+
 
 # 1. Load security variables
 load_dotenv()
@@ -12,6 +18,18 @@ app = Flask(__name__)
 
 # 3. Drop the security shield for your frontend team
 CORS(app)
+
+
+
+# configure and turn on the database
+app.config["SQLALCHEMY_DATABASE_URI"] ="sqlite:///transactions.db"  # Default to SQLite for easy local testing 
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+db.init_app(app) 
+
+# Create the database tables if they don't exist
+with app.app_context():
+    db.create_all()
+
 
 
 # 4. Route 1: The Dashboard Overview (For Irene & Gibson)
@@ -65,7 +83,23 @@ def parse_sms():
     # 2. Run your Regex engine
     clean_data = extract_mpesa_data(raw_sms)
 
-    # (Tomorrow, Charity's code will go right here to save 'clean_data' to the database)
+   # NEW: Charity save logic - we will save the parsed data to the database right away
+    try:
+        #create a new Transaction object using the cleaned data and save it to the database
+        new_transaction = Transaction(
+            transaction_code=clean_data["transaction_code"],
+            name=clean_data["name"],
+            phone_number=clean_data["phone_number"],
+            amount=clean_data["amount"],
+            type="inflow",  # Hardcoded for this demo
+        )
+        #save to the database
+        db.session.add(new_transaction)
+        db.session.commit()
+    except Exception as e:
+        #if the transaction code is not unique, we will get an error. Rollback the session and return an error message
+        db.session.rollback()
+        return jsonify({"error": f"Database error: {str(e)}"}), 500
 
     # 3. Send the success response back
     return jsonify(
