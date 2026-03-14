@@ -1,0 +1,21 @@
+# Environments
+venv/
+.env
+.venv
+env/
+
+# Python caching
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Databases (Local instances)
+instance/
+*.db
+*.sqlite3
+
+# Distribution / Build
+dist/
+build/
+*.egg-info/
