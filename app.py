@@ -8,7 +8,7 @@ from mpesa_parser import extract_mpesa_data # <-- Importing your new parser!
 from models import db, Transaction, User, Business, Customer, InventoryItem
 
 # 1. Load security variables
-load_dotenv()
+load_dotenv() 
 
 # 2. Initialize the Server
 app = Flask(__name__)
